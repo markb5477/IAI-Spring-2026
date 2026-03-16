@@ -1,9 +1,15 @@
 import copy
+import math
 
 
 def evaluate_board(board, ai_player):
     """
-    Scores the board from the AI's perspective using a weighted heuristic.
+    Scores the board from the AI's perspective using a sigmoid-based heuristic.
+
+    Uses a sigmoid function centered at 24 (half of 48 total balls) to model
+    win probability. The steepest gradient is at the decision boundary where
+    each additional ball matters most. Pit scores are weighted by proximity
+    to the player's nest, rewarding balls that are closer to being captured.
 
     Input:
         board (list[int]): The current Mancala board state represented as a
@@ -13,17 +19,31 @@ def evaluate_board(board, ai_player):
         ai_player (int): Which player the AI controls (1 or 2).
 
     Output:
-        int: A heuristic score for the board. Positive values favor the AI,
+        float: A heuristic score for the board. Positive values favor the AI,
             negative values favor the opponent.
     """
     if ai_player == 2:
-        # Compute score from Player 2's perspective
-        # Nest difference weighted 20x (captured stones are permanent)
-        # Pit difference added at 1x (pits are volatile and change each turn)
-        return (board[14] - board[7]) * 20 + (sum(board[8:14]) - sum(board[1:7]))
+        my_nest, opp_nest = board[14], board[7]
+        my_pits = sum(i * board[7 + i] for i in range(1, 7))
+        opp_pits = sum(i * board[i] for i in range(1, 7))
     else:
-        # Compute score from Player 1's perspective
-        return (board[7] - board[14]) * 20 + (sum(board[1:7]) - sum(board[8:14]))
+        my_nest, opp_nest = board[7], board[14]
+        my_pits = sum(i * board[i] for i in range(1, 7))
+        opp_pits = sum(i * board[7 + i] for i in range(1, 7))
+
+    def win_prob(n):
+        return 1 / (1 + math.exp(-0.35 * (n - 24)))
+
+    nest_score = (win_prob(my_nest) - win_prob(opp_nest)) * 100
+    pit_score = (my_pits - opp_pits) * 0.8
+
+    # Reward board states where extra-turn moves are available
+    if ai_player == 1:
+        extra_turn_bonus = sum(1 for i in range(1, 7) if board[i] == (7 - i))
+    else:
+        extra_turn_bonus = sum(1 for i in range(1, 7) if board[7 + i] == (7 - i))
+
+    return nest_score + pit_score + extra_turn_bonus * 3
 
 
 def minimax(board, depth, alpha, beta, current_player, ai_player, make_move):
