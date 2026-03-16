@@ -1,6 +1,3 @@
-
-
-
 # AI Techniques Used
 
 ## Minimax Algorithm
