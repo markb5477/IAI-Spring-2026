@@ -1,30 +1,32 @@
 """Syntactic complexity ranking for propositional formulas.
 
 Penalty weights, summed recursively:
-    atom         : 0
-    !            : 1
-    & , |        : 2
-    -> , <->     : 3
+    atom / Top / Bot   : 0
+    !                  : 1
+    & , |              : 2
+    -> , <->           : 3
 
-rank(phi) returns a non-negative int.  Lower = simpler = more entrenched.
+``rank(phi)`` returns a non-negative int.  Lower = simpler = more entrenched.
 An atom has rank 0; a negated atom has rank 1; anything built from binary
 connectives has rank >= 2, so literals always beat compound formulas.
 
-Callers that use this as a belief-base priority should negate the result
-(so the existing argmin-by-priority logic in contraction drops the most
-complex formula first).
-
-Tiebreaking: rank is deterministic. When several formulas share a rank,
-resolve the tie at the call site with random.choice.
+Callers using this as a belief-base priority should negate the result so that
+argmax-by-priority drops the most complex formula first (see ``belief_base``).
 """
 
-_W = {"not": 1, "and": 2, "or": 2, "impl": 3, "iff": 3}
+from __future__ import annotations
+
+from formula import Formula, Top, Bot, Var, Not, And, Or, Implies, Iff
 
 
-def rank(phi):
-    k = phi[0]
-    if k == "var":
-        return 0
-    if k == "not":
-        return _W["not"] + rank(phi[1])
-    return _W[k] + rank(phi[1]) + rank(phi[2])
+def rank(phi: Formula) -> int:
+    match phi:
+        case Top() | Bot() | Var():
+            return 0
+        case Not(f=g):
+            return 1 + rank(g)
+        case And(left=a, right=b) | Or(left=a, right=b):
+            return 2 + rank(a) + rank(b)
+        case Implies(left=a, right=b) | Iff(left=a, right=b):
+            return 3 + rank(a) + rank(b)
+    raise TypeError(f"unknown formula node: {phi!r}")

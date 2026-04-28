@@ -5,12 +5,14 @@ Run:
     python3 belief_revision.py
 
 Module layout:
-    formula.py      AST, tokenizer, parser, pretty-printer, neg
-    belief_base.py  the (formula, priority) list and helpers
-    entailment.py   entails(B, phi)     - stage 2, the only primitive
-    expansion.py    expand(B, phi)      - stage 4
-    contraction.py  contract(B, phi)    - stage 3
-    revision.py     revise(B, phi)      - Levi identity
+    formula.py      Frozen-dataclass AST + parser, pretty, neg, Top/Bot
+    cnf.py          CNF pipeline + Clause/CNF type aliases
+    resolution.py   entails(premises: Iterable[Formula], phi) via resolution
+    belief_base.py  Belief dataclass, BeliefBase alias, priority_of, formulas_of
+    expansion.py    expand(B, phi)
+    contraction.py  contract(B, phi) via partial meet over remainders
+    revision.py     revise(B, phi) via the Levi identity
+    postulates.py   AGM postulate checkers
     shell.py        interactive CLI
 """
 

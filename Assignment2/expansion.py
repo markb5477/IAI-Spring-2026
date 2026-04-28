@@ -1,12 +1,24 @@
 """AGM expansion:  B + phi.
 
-Dumb operation: add phi to B with a rank-derived priority. No consistency check,
-no entailment query.  Can produce an inconsistent base - that is intentional;
-handling inconsistency is revision's job.
+Add phi to B with a rank-derived priority.  No consistency check; that is
+revision's job.  Skip if phi is already syntactically present or logically
+equivalent to an existing belief (Extensionality).
 """
 
-from belief_base import priority_of
+from __future__ import annotations
+
+from formula import Formula
+from belief_base import BeliefBase, make
+from resolution import entails
 
 
-def expand(B, phi):
-    return B + [(phi, priority_of(phi))]
+def equivalent(phi: Formula, psi: Formula) -> bool:
+    """Logical equivalence:  φ ⊨ ψ  and  ψ ⊨ φ."""
+    return entails([phi], psi) and entails([psi], phi)
+
+
+def expand(B: BeliefBase, phi: Formula) -> BeliefBase:
+    for b in B:
+        if b.formula == phi or equivalent(b.formula, phi):
+            return B
+    return B + [make(phi)]
