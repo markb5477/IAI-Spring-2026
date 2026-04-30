@@ -3,8 +3,10 @@
 Penalty weights, summed recursively:
     atom         : 0
     !            : 1
-    & , |        : 2
-    -> , <->     : 3
+    &            : 2
+    |            : 3
+    ->           : 4
+    <->          : 5
 
 rank(phi) returns a non-negative int.  Lower = simpler = more entrenched.
 An atom has rank 0; a negated atom has rank 1; anything built from binary
@@ -18,7 +20,7 @@ Tiebreaking: rank is deterministic. When several formulas share a rank,
 resolve the tie at the call site with random.choice.
 """
 
-_W = {"not": 1, "and": 2, "or": 2, "impl": 3, "iff": 3}
+_W = {"not": 1, "and": 2, "or": 3, "impl": 4, "iff": 5}
 
 
 def rank(phi):
