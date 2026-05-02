@@ -72,3 +72,7 @@ def main() -> None:
             B = run_line(B, line)
         except SystemExit:
             break
+
+if __name__ == "__main__":
+    main() 
+    
